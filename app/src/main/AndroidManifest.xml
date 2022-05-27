@@ -26,6 +26,9 @@
             android:name=".activity.PlayMusicActivity"
             android:theme="@style/Theme.MusicPlayer"
             android:exported="true"/>
+
+        <service android:name=".services.OnClearFromRecentService"/>
+        <receiver android:name=".services.NotificationActionService"/>
     </application>
 
 </manifest>

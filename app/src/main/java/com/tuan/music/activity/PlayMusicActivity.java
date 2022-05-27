@@ -5,7 +5,6 @@ import static com.tuan.music.Constants.INTENT_CONSTANT.CAN_PLAY;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import android.widget.SeekBar;
 
@@ -19,6 +18,7 @@ import com.tuan.music.helper.ImageHelper;
 import com.tuan.music.model.Song;
 import com.tuan.music.model.event.ChangeSongEventCurrentSong;
 import com.tuan.music.model.event.ChangeSongEventPlaylist;
+import com.tuan.music.model.event.PauseOrPlaySongFromNotificationEvent;
 import com.tuan.music.model.event.PlayNextSongEvent;
 import com.tuan.music.model.event.PlaySongEvent;
 import com.tuan.music.player.MyPlayer;
@@ -33,6 +33,7 @@ public class PlayMusicActivity extends AppCompatActivity {
     ActivityPlayMusicBinding binding;
     private boolean playFirstTime = true;
     private Handler handler;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,7 +58,7 @@ public class PlayMusicActivity extends AppCompatActivity {
         binding.layoutPlayMusic.skTime.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if(fromUser) {
+                if (fromUser) {
                     MyPlayer.getInstance().seekTo(progress);
                     binding.layoutPlayMusic.skTime.setProgress(progress);
                 }
@@ -81,9 +82,9 @@ public class PlayMusicActivity extends AppCompatActivity {
                 binding.layoutPlayMusic.skTime.setProgress(MyPlayer.getInstance().getCurrentTime());
                 binding.layoutPlayMusic.tvCurrentTime.setText(milliSecondsToTimer(MyPlayer.getInstance().getCurrentTime()));
                 binding.layoutPlayMusic.tvTotalTime.setText(milliSecondsToTimer(MyPlayer.getInstance().getCurrentSongDuration()));
-                handler.postDelayed(this,100);
+                handler.postDelayed(this, 100);
             }
-        },0);
+        }, 0);
         if (!playFirstTime) {
             ImageHelper.setImage(this, binding.layoutPlayMusic.ivPlay, R.drawable.ic_play);
             MyPlayer.getInstance().stopMusicWithoutClear();
@@ -144,17 +145,17 @@ public class PlayMusicActivity extends AppCompatActivity {
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onPlayNextSongEvent(PlayNextSongEvent event){
+    public void onPlayNextSongEvent(PlayNextSongEvent event) {
         changeSong();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onPlaySong(PlaySongEvent event){
+    public void onPlaySong(PlaySongEvent event) {
         ImageHelper.setImage(this, binding.layoutPlayMusic.ivPlay, R.drawable.ic_pause);
         changeSong();
     }
 
-    private void changeSong(){
+    private void changeSong() {
         initSongTitle();
         EventBus.getDefault().post(new ChangeSongEventPlaylist(MyPlayer.getInstance().getCurrentSongIndex()));
         EventBus.getDefault().post(new ChangeSongEventCurrentSong(MyPlayer.getInstance().getCurrentSong()));
@@ -176,6 +177,11 @@ public class PlayMusicActivity extends AppCompatActivity {
         }
         finalTimerString = finalTimerString + minutes + ":" + secondsString;
         return finalTimerString;
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onServiceChange(PauseOrPlaySongFromNotificationEvent event) {
+
     }
 
 }

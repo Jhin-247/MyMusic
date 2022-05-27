@@ -1,12 +1,16 @@
 package com.tuan.music.activity;
 
 import static com.tuan.music.Constants.INTENT_CONSTANT.CAN_PLAY;
-import static com.tuan.music.Constants.INTENT_CONSTANT.CURRENT_SONG;
-import static com.tuan.music.Constants.INTENT_CONSTANT.PLAYLIST;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 
@@ -16,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.blankj.utilcode.util.ToastUtils;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -26,20 +31,46 @@ import com.tuan.music.helper.ImageHelper;
 import com.tuan.music.helper.MusicHelper;
 import com.tuan.music.helper.PermissionHelper;
 import com.tuan.music.listener.HomeSongListener;
+import com.tuan.music.listener.Playable;
 import com.tuan.music.model.Song;
+import com.tuan.music.model.event.PauseOrPlaySongFromNotificationEvent;
 import com.tuan.music.model.event.PlaySongHomeEvent;
+import com.tuan.music.notification.MyNotificationBuilder;
 import com.tuan.music.player.MyPlayer;
+import com.tuan.music.services.OnClearFromRecentService;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements HomeSongListener {
+public class MainActivity extends AppCompatActivity implements HomeSongListener, Playable {
     ActivityMainBinding binding;
+    BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getExtras().getString("action");
+            switch (action) {
+                case MyNotificationBuilder.ACTION_NEXT:
+                    onPlayNext();
+                    break;
+                case MyNotificationBuilder.ACTION_PREVIOUS:
+                    onPlayPrevious();
+                    break;
+                case MyNotificationBuilder.ACTION_PLAY:
+                    if (MyPlayer.getInstance().isPlaying()) {
+                        onPauseSong();
+                    } else {
+                        onPlay();
+                    }
+                    break;
+            }
+
+        }
+    };
     private List<Song> allSongFromDevice;
+    private NotificationManager notificationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +83,12 @@ public class MainActivity extends AppCompatActivity implements HomeSongListener 
         }
 
         checkPermission();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotification();
+            registerReceiver(broadcastReceiver, new IntentFilter("TRACK_TRACKS"));
+            startService(new Intent(getBaseContext(), OnClearFromRecentService.class));
+        }
     }
 
     @Override
@@ -66,6 +103,15 @@ public class MainActivity extends AppCompatActivity implements HomeSongListener 
         EventBus.getDefault().unregister(this);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationManager.cancelAll();
+        }
+        unregisterReceiver(broadcastReceiver);
+    }
+
     private void checkPermission() {
         if (PermissionHelper.checkPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
             initData();
@@ -77,9 +123,9 @@ public class MainActivity extends AppCompatActivity implements HomeSongListener 
 
     private void initListener() {
         binding.btnMyMusic.setOnClickListener(v -> {
-            MyPlayer.getInstance().setCurrentSong(allSongFromDevice.get(0));
-            Intent intent = new Intent(this,PlayMusicActivity.class);
-            intent.putExtra(CAN_PLAY,false);
+            MyPlayer.getInstance().setCurrentSongIndex(0);
+            Intent intent = new Intent(this, PlayMusicActivity.class);
+            intent.putExtra(CAN_PLAY, false);
             startActivity(intent);
         });
     }
@@ -93,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements HomeSongListener 
 
     }
 
-    private void openBottomPlayer(){
+    private void openBottomPlayer() {
         binding.layoutPlayMusic.getRoot().setVisibility(View.VISIBLE);
         setupBottomView();
         setupBottomListener();
@@ -118,27 +164,26 @@ public class MainActivity extends AppCompatActivity implements HomeSongListener 
     private void setupBottomListener() {
         binding.layoutPlayMusic.ivPlay.setOnClickListener(v -> {
             if (!MyPlayer.getInstance().isPlaying()) {
-                MyPlayer.getInstance().resume();
+                onPlay();
                 ImageHelper.setImage(this, binding.layoutPlayMusic.ivPlay, R.drawable.ic_pause);
             } else {
-                MyPlayer.getInstance().stopMusicWithoutClear();
+                onPauseSong();
                 ImageHelper.setImage(this, binding.layoutPlayMusic.ivPlay, R.drawable.ic_play);
             }
         });
 
         binding.layoutPlayMusic.ivPlayNext.setOnClickListener(v -> {
-            MyPlayer.getInstance().playNext();
+            onPlayNext();
         });
 
         binding.layoutPlayMusic.ivPlayPrev.setOnClickListener(v -> {
-            MyPlayer.getInstance().playPrev();
-//            changeSong();
+            onPlayPrevious();
         });
 
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onPlaySong(PlaySongHomeEvent event){
+    public void onPlaySong(PlaySongHomeEvent event) {
         openBottomPlayer();
     }
 
@@ -146,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements HomeSongListener 
     public void onSongClick(int song) {
         MyPlayer.getInstance().setCurrentSongIndex(song);
         Intent intent = new Intent(this, PlayMusicActivity.class);
+        MyNotificationBuilder.createNotification(this, MyPlayer.getInstance().getCurrentSong(), MyPlayer.getInstance().getCurrentSongIndex(), MyPlayer.getInstance().getCurrentPlaylist().size(), R.drawable.ic_pause);
         startActivity(intent);
     }
 
@@ -153,4 +199,47 @@ public class MainActivity extends AppCompatActivity implements HomeSongListener 
     public void onMoreClick(int song) {
 
     }
+
+    private void createNotification() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel notificationChannel = new NotificationChannel(
+                    MyNotificationBuilder.CHANNEL_ID,
+                    "ME",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            notificationManager = getSystemService(NotificationManager.class);
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(notificationChannel);
+            }
+        }
+    }
+
+    @Override
+    public void onPlayNext() {
+        MyPlayer.getInstance().playNext();
+        MyNotificationBuilder.createNotification(this, MyPlayer.getInstance().getCurrentSong(), MyPlayer.getInstance().getCurrentSongIndex(), MyPlayer.getInstance().getCurrentPlaylist().size(), R.drawable.ic_pause);
+    }
+
+    @Override
+    public void onPlay() {
+        MyPlayer.getInstance().resume();
+        EventBus.getDefault().post(new PauseOrPlaySongFromNotificationEvent(true));
+        ImageHelper.setImage(this, binding.layoutPlayMusic.ivPlay, R.drawable.ic_pause);
+        MyNotificationBuilder.createNotification(this, MyPlayer.getInstance().getCurrentSong(), MyPlayer.getInstance().getCurrentSongIndex(), MyPlayer.getInstance().getCurrentPlaylist().size(), R.drawable.ic_pause);
+    }
+
+    @Override
+    public void onPauseSong() {
+        MyPlayer.getInstance().stopMusicWithoutClear();
+        EventBus.getDefault().post(new PauseOrPlaySongFromNotificationEvent(true));
+        ImageHelper.setImage(this, binding.layoutPlayMusic.ivPlay, R.drawable.ic_play);
+        MyNotificationBuilder.createNotification(this, MyPlayer.getInstance().getCurrentSong(), MyPlayer.getInstance().getCurrentSongIndex(), MyPlayer.getInstance().getCurrentPlaylist().size(), R.drawable.ic_play);
+    }
+
+    @Override
+    public void onPlayPrevious() {
+        MyPlayer.getInstance().playPrev();
+        MyNotificationBuilder.createNotification(this, MyPlayer.getInstance().getCurrentSong(), MyPlayer.getInstance().getCurrentSongIndex(), MyPlayer.getInstance().getCurrentPlaylist().size(), R.drawable.ic_pause);
+    }
+
 }

@@ -2,6 +2,7 @@ package com.tuan.music.player;
 
 import android.media.MediaPlayer;
 
+import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.ToastUtils;
 import com.tuan.music.model.Song;
 import com.tuan.music.model.event.PlayNextSongEvent;
@@ -18,7 +19,7 @@ public class MyPlayer {
     private final MediaPlayer player;
 
     private List<Song> currentPlaylist;
-//    private Song currentSong;
+    //    private Song currentSong;
     private int currentSongIndex;
 
     private boolean canPlayNext, canPlayPrevious;
@@ -50,6 +51,7 @@ public class MyPlayer {
     }
 
     public void setCurrentPlaylist(List<Song> songs) {
+        LogUtils.d("setCurrentPlaylist");
         stopMusicAndRelease();
         this.currentPlaylist = songs;
         if (songs.size() > 0) {
@@ -60,8 +62,9 @@ public class MyPlayer {
     }
 
     public void playNext() {
+        LogUtils.d("playNext");
         if (canPlayNext) {
-            currentSongIndex++;
+            currentSongIndex += 1;
             canPlayPrevious = true;
             canPlayNext = currentSongIndex < currentPlaylist.size() - 1;
             stopMusicAndRelease();
@@ -71,8 +74,9 @@ public class MyPlayer {
     }
 
     public void playPrev() {
+        LogUtils.d("playPrev");
         if (canPlayPrevious) {
-            currentSongIndex--;
+            currentSongIndex -= 1;
             canPlayNext = true;
             canPlayPrevious = currentSongIndex > 0;
             stopMusicAndRelease();
@@ -84,22 +88,27 @@ public class MyPlayer {
         return currentSongIndex;
     }
 
+    public void setCurrentSongIndex(int index) {
+        LogUtils.d("setCurrentSongIndex");
+        stopMusicAndRelease();
+        currentSongIndex = index;
+
+    }
+
     public int getCurrentSongDuration() {
+//        LogUtils.d("getCurrentSongDuration");
         return Integer.parseInt(currentPlaylist.get(currentSongIndex).getDuration());
     }
 
     public Song getCurrentSong() {
+        LogUtils.d("getCurrentSong");
         return currentPlaylist.get(currentSongIndex);
     }
 
     public void setCurrentSong(Song song) {
+        LogUtils.d("setCurrentSong");
         stopMusicAndRelease();
         currentSongIndex = currentPlaylist.indexOf(song);
-    }
-
-    public void setCurrentSongIndex(int index){
-        stopMusicAndRelease();
-        currentSongIndex = index;
     }
 
     public void seekTo(int duration) {
@@ -111,7 +120,7 @@ public class MyPlayer {
     }
 
     public void play() {
-
+        LogUtils.d("play");
         try {
             if (player.isPlaying()) {
                 player.stop();
@@ -127,6 +136,7 @@ public class MyPlayer {
     }
 
     public void stopMusicAndRelease() {
+        LogUtils.d("stopMusicAndRelease");
         if (player.isPlaying()) {
             player.stop();
         }
@@ -135,6 +145,7 @@ public class MyPlayer {
     }
 
     public void stopMusicWithoutClear() {
+        LogUtils.d("stopMusicWithoutClear");
         if (player.isPlaying()) {
             player.pause();
         }
@@ -155,6 +166,7 @@ public class MyPlayer {
     }
 
     public void resume() {
+        LogUtils.d("resume");
         try {
             if (!player.isPlaying()) {
                 player.start();
