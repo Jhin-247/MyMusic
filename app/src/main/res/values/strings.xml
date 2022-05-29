@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">MusicPlayer</string>
+
+    <string name="hint_search">Tìm kiếm nhạc</string>
+
+    <string name="discovery">Khám phá nhạc</string>
+    
+    <string name="playlist">Danh sách phát</string>
+
+    <string name="my_music">Nhạc của tui</string>
+
+    <string name="songs">Bài hát</string>
+
+    <string name="playlist_title">Playlist %1d</string>
+</resources>
