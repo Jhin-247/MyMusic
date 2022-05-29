@@ -28,6 +28,7 @@
             android:exported="true"/>
         <activity android:name=".activity.PlaylistActivity" />
         <activity android:name=".activity.AddPlaylistActivity" />
+        <activity android:name=".activity.ModifyPlaylistActivity" />
 
         <service android:name=".services.OnClearFromRecentService"/>
         <receiver android:name=".services.NotificationActionService"/>

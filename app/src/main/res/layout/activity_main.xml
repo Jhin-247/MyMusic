@@ -57,6 +57,7 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
+                        android:layout_marginStart="10dp"
                         android:layout_toEndOf="@id/iv_search"
                         android:background="@drawable/bg_edittext"
                         android:hint="@string/hint_search"
@@ -64,18 +65,19 @@
                         android:textColor="@color/black"
                         android:textColorHint="#7D7D7D"
                         android:textSize="16sp" />
-
                 </RelativeLayout>
 
             </RelativeLayout>
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rcv_search"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:layout_constraintTop_toBottomOf="@id/layout_search"
                 android:layout_margin="5dp"
                 android:visibility="gone"
-                tools:visibility="visible"/>
+                app:layout_constraintTop_toBottomOf="@id/layout_search"
+                tools:visibility="visible" />
+
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/csl_layout"
                 android:layout_width="match_parent"

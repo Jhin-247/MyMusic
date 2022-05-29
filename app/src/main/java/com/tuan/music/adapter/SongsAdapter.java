@@ -54,6 +54,10 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongHolder> 
         return position;
     }
 
+    public Song getCurrentSong() {
+        return currentSong;
+    }
+
     @SuppressLint("NotifyDataSetChanged")
     public void setCurrentSong(int song) {
         this.currentSong = songs.get(song);

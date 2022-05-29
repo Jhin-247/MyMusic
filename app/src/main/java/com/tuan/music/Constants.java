@@ -42,6 +42,8 @@ public class Constants {
         public static final String CURRENT_SONG = "current_song";
         public static final String IS_PLAYLIST = "is_playlist";
         public static final String CAN_PLAY = "can_play";
+
+        public static final String PLAYLIST_ID = "id";
     }
 
     public static class SHARED_PREF {

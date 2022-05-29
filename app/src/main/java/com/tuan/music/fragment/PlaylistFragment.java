@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.tuan.music.adapter.SongsAdapter;
 import com.tuan.music.databinding.FragmentPlaylistBinding;
 import com.tuan.music.db.SQLiteHelper;
-import com.tuan.music.helper.MusicHelper;
+import com.tuan.music.dialog.PlaylistDialog;
 import com.tuan.music.listener.HomeSongListener;
 import com.tuan.music.model.Playlist;
 import com.tuan.music.model.Song;
@@ -94,17 +94,20 @@ public class PlaylistFragment extends Fragment implements HomeSongListener {
             MyPlayer.getInstance().setCurrentSongIndex(song);
             MyPlayer.getInstance().play();
             EventBus.getDefault().post(new PlaySongEvent());
-        } else {
-
         }
 
     }
 
     @Override
     public void onMoreClick(int song) {
-        sqLiteHelper.deleteSongFromPlaylist(adapter.getSongs().get(song).getId(),MyPlayer.getInstance().getPlaylistId());
-        Playlist playlist = sqLiteHelper.getPlaylistById(MyPlayer.getInstance().getPlaylistId());
-        MyPlayer.getInstance().setCurrentPlaylistWithoutChangingPlaylistId(sqLiteHelper.getPlaylistById(playlist.getId()).getSongs());
-        initData();
+        if (MyPlayer.getInstance().getPlaylistId() != -1) {
+            sqLiteHelper.deleteSongFromPlaylist(adapter.getSongs().get(song).getId(), MyPlayer.getInstance().getPlaylistId());
+            Playlist playlist = sqLiteHelper.getPlaylistById(MyPlayer.getInstance().getPlaylistId());
+            MyPlayer.getInstance().setCurrentPlaylistWithoutChangingPlaylistId(sqLiteHelper.getPlaylistById(playlist.getId()).getSongs());
+            initData();
+        } else {
+            PlaylistDialog dialog = new PlaylistDialog(requireContext(), adapter.getSongs().get(song).getId());
+            dialog.show();
+        }
     }
 }

@@ -20,6 +20,10 @@ public class PlaylistChoosingAdapter extends RecyclerView.Adapter<PlaylistChoosi
     private final List<Playlist> playlists;
     private final PlaylistSongAddingClickListener listener;
 
+    public List<Playlist> getPlaylists() {
+        return playlists;
+    }
+
     public PlaylistChoosingAdapter(List<Playlist> playlists, PlaylistSongAddingClickListener listener) {
         this.playlists = playlists;
         this.listener = listener;
@@ -37,6 +41,7 @@ public class PlaylistChoosingAdapter extends RecyclerView.Adapter<PlaylistChoosi
         boolean isChosen = playlist.isChosen();
         holder.binding.tvSongName.setText(playlist.getName());
         holder.binding.tvSongArtist.setVisibility(View.GONE);
+        holder.binding.tvSongName.setTextColor(holder.binding.getRoot().getContext().getResources().getColor(R.color.black));
         Glide.with(holder.binding.getRoot()).load(R.drawable.notes).into(holder.binding.ivSongThumbnail);
         if (isChosen) {
             holder.binding.ivStatus.setBackground(AppCompatResources.getDrawable(holder.binding.getRoot().getContext(), R.drawable.ic_done));
@@ -60,5 +65,12 @@ public class PlaylistChoosingAdapter extends RecyclerView.Adapter<PlaylistChoosi
                 listener.onSongClick(getAdapterPosition());
             });
         }
+    }
+
+
+    public void changeStatus(int position) {
+        boolean b = playlists.get(position).isChosen();
+        playlists.get(position).setChosen(!b);
+        notifyDataSetChanged();
     }
 }

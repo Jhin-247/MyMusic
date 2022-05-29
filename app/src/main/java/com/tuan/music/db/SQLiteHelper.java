@@ -298,7 +298,10 @@ public class SQLiteHelper extends SQLiteOpenHelper {
     }
 
     public void addSongToPlaylist(int songId,int playlistId){
-        SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
-        sqLiteDatabase.delete(Constants.DB_CONSTANTS.TABLE_NAME_SONG_PLAYLIST,Constants.DB_CONSTANTS.SONG_ID + " = " + songId + " and " + Constants.DB_CONSTANTS.PLAYLIST_ID + " = " + playlistId, null);
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Constants.DB_CONSTANTS.PLAYLIST_ID, playlistId);
+        contentValues.put(Constants.DB_CONSTANTS.SONG_ID, songId);
+        sqLiteDatabase.insert(Constants.DB_CONSTANTS.TABLE_NAME_SONG_PLAYLIST, null, contentValues);
     }
 }

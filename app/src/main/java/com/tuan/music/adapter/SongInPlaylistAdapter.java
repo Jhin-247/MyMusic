@@ -64,6 +64,10 @@ public class SongInPlaylistAdapter extends RecyclerView.Adapter<SongInPlaylistAd
         return chosen;
     }
 
+    public List<Song> getSongs(){
+        return songs;
+    }
+
     public List<Song> getChosenSong() {
         List<Song> chosenSongs = new ArrayList<>();
         for (Song song : songs) {

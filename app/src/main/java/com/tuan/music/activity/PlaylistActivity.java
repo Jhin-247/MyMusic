@@ -32,8 +32,7 @@ public class PlaylistActivity extends AppCompatActivity implements PlaylistListe
     ActivityPlaylistBinding binding;
     SQLiteHelper sqLiteHelper;
     PlaylistAdapterGrid adapter;
-
-
+    private boolean isModifying;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -61,6 +60,8 @@ public class PlaylistActivity extends AppCompatActivity implements PlaylistListe
             }
         });
 
+        isModifying = false;
+
         initData();
         initListener();
     }
@@ -82,6 +83,10 @@ public class PlaylistActivity extends AppCompatActivity implements PlaylistListe
             binding.ivClose.performClick();
             onResume();
         });
+        binding.ivModify.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ModifyPlaylistActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void initData() {
@@ -91,13 +96,15 @@ public class PlaylistActivity extends AppCompatActivity implements PlaylistListe
         binding.rcvPlaylist.setLayoutManager(new GridLayoutManager(this, 2, RecyclerView.VERTICAL, false));
         adapter = new PlaylistAdapterGrid(playlists, this);
         binding.rcvPlaylist.setAdapter(adapter);
+        binding.rltFunction.setVisibility(View.GONE);
+        isModifying = false;
     }
 
     @Override
     public void onPlaylistClick(int position) {
         if (adapter.isOpenSelection()) {
             adapter.changeStatus(position);
-            if(adapter.getChosenPlaylistNUmber() == 1){
+            if (adapter.getChosenPlaylistNUmber() == 1) {
                 binding.ivModify.setClickable(true);
                 binding.ivModify.setAlpha(1.0f);
             } else {
@@ -109,17 +116,19 @@ public class PlaylistActivity extends AppCompatActivity implements PlaylistListe
             MyPlayer.getInstance().setCurrentPlaylist(adapter.getPlaylistAtPosition(position).getSongs());
             MyPlayer.getInstance().setCurrentPlaylistId(adapter.getPlaylistAtPosition(position).getId());
             Intent intent = new Intent(this, PlayMusicActivity.class);
-            intent.putExtra(Constants.INTENT_CONSTANT.IS_PLAYLIST,true);
+            intent.putExtra(Constants.INTENT_CONSTANT.IS_PLAYLIST, true);
             startActivity(intent);
         }
     }
 
     @Override
     public void onPlaylistLongClickListener(int position) {
-        binding.rltFunction.setVisibility(View.VISIBLE);
-        adapter.openOrCloseMultiSelection(true);
-        onPlaylistClick(position);
-
+        if (!isModifying) {
+            binding.rltFunction.setVisibility(View.VISIBLE);
+            adapter.openOrCloseMultiSelection(true);
+            onPlaylistClick(position);
+            isModifying = true;
+        }
     }
 
     @Override

@@ -171,6 +171,7 @@ public class MainActivity extends AppCompatActivity implements HomeSongListener,
             }
         });
         binding.btnMyMusic.setOnClickListener(v -> {
+            MyPlayer.getInstance().setCurrentPlaylist(allSongFromDB);
             MyPlayer.getInstance().setCurrentSongIndex(0);
             Intent intent = new Intent(this, PlayMusicActivity.class);
             intent.putExtra(CAN_PLAY, false);
